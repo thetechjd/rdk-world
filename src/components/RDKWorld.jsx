@@ -3360,7 +3360,7 @@ function TitleScreen({ onStart }) {
           RDK<br/>WORLD
         </h1>
         <div style={{ fontFamily:VT, fontSize:22, color:C.dim, marginTop:16, maxWidth:460, lineHeight:1.5 }}>
-          Don't just learn the agentic stack.<br/>Build it.
+          Welcome to the World of Decentralized Intelligence.
         </div>
       </div>
       <div style={{ fontFamily:PIXEL, fontSize:11, color:C.text, opacity:blink?1:0 }}>▶ PRESS START</div>
