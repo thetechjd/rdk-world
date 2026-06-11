@@ -292,7 +292,7 @@ function IntroScene({ classKey, onDone }) {
   const [step, setStep] = useState(0);
 
   const deliverables = [
-    { icon:"⚡", label:"RDK Node installed & configured", cmd:"npm install -g rdk && rdk init" },
+    { icon:"⚡", label:"RDK Node installed & configured", cmd:"npm install -g @retrodeck/rdk && rdk init" },
     { icon:"🔒", label:"Private vault indexed with your knowledge", cmd:"rdk index ./my-docs/ --private" },
     { icon:"🌐", label:"Public contributions on the network", cmd:"rdk index ./my-guide.md" },
     { icon:"🔌", label:"Claude Desktop connected to vault", cmd:"rdk mcp:serve --stdio" },
@@ -457,21 +457,24 @@ function Confetti({active}) {
 
 function InstallCeremony({os, setOs, phase, setPhase, onComplete, userState}) {
   const INSTALL_CMDS = {
-    mac:     `curl -fsSL https://rdk.network/install.sh | sh`,
-    linux:   `curl -fsSL https://rdk.network/install.sh | sh`,
-    windows: `iwr -useb https://rdk.network/install.ps1 | iex`,
+    mac:     { lines: [`brew tap thetechjd/rdk`, `brew install rdk`] },
+    linux:   { lines: [`curl -fsSL https://raw.githubusercontent.com/thetechjd/rdk/main/install.sh | bash`] },
+    windows: { lines: [`npm install -g @retrodeck/rdk`], note: `requires Node.js 20+` },
   };
 
   const installLines = {
     mac: [
-      `$ ${INSTALL_CMDS.mac}`,
+      `$ ${INSTALL_CMDS.mac.lines[0]}`,
+      `→ Tapping thetechjd/rdk...`,
+      `  ✓ Tapped 1 formula`,
       ``,
-      `→ Downloading RDK CLI for darwin-arm64...`,
+      `$ ${INSTALL_CMDS.mac.lines[1]}`,
+      `→ Downloading rdk 1.0.0 (bottle) for darwin-arm64...`,
       `  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ 24.8 MB / 24.8 MB`,
       `→ Verifying signature (sha256)...`,
       `  ✓ Signature valid`,
-      `→ Installing to /usr/local/bin/rdk...`,
-      `  ✓ Installed`,
+      `→ Pouring rdk--1.0.0.arm64.bottle.tar.gz...`,
+      `  ✓ Installed to /opt/homebrew/bin/rdk`,
       `→ Setting up shell completions...`,
       `  ✓ zsh completions installed`,
       `  ✓ bash completions installed`,
@@ -480,7 +483,7 @@ function InstallCeremony({os, setOs, phase, setPhase, onComplete, userState}) {
       `  Run 'rdk --version' to verify.`,
     ],
     linux: [
-      `$ ${INSTALL_CMDS.linux}`,
+      `$ ${INSTALL_CMDS.linux.lines[0]}`,
       ``,
       `→ Downloading RDK CLI for linux-x86_64...`,
       `  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ 23.4 MB / 23.4 MB`,
@@ -495,16 +498,14 @@ function InstallCeremony({os, setOs, phase, setPhase, onComplete, userState}) {
       `  Run 'rdk --version' to verify.`,
     ],
     windows: [
-      `PS> ${INSTALL_CMDS.windows}`,
+      `PS> ${INSTALL_CMDS.windows.lines[0]}`,
+      `# ${INSTALL_CMDS.windows.note}`,
       ``,
-      `→ Downloading RDK CLI for windows-x86_64...`,
-      `  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ 25.1 MB / 25.1 MB`,
-      `→ Verifying signature (sha256)...`,
-      `  ✓ Signature valid`,
-      `→ Installing to %USERPROFILE%\\.rdk\\bin\\rdk.exe...`,
+      `→ Resolving @retrodeck/rdk from npm registry...`,
+      `  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ added 1 package in 4s`,
+      `→ Linking rdk binary...`,
+      `  ✓ rdk added to PATH`,
       `  ✓ Installed`,
-      `→ Adding to PATH...`,
-      `  ✓ PATH updated (restart terminal to take effect)`,
       ``,
       `✓ RDK installed successfully.`,
       `  Run 'rdk --version' to verify.`,
@@ -585,7 +586,12 @@ function InstallCeremony({os, setOs, phase, setPhase, onComplete, userState}) {
           <div style={{fontFamily:PIXEL, fontSize:9, color:C.dim, marginBottom:8, letterSpacing:1}}>
             STEP 2 — RUN THIS COMMAND
           </div>
-          <CopyBlock lang={os.toUpperCase()} color={C.yellow} code={INSTALL_CMDS[os]}/>
+          <CopyBlock lang={os.toUpperCase()} color={C.yellow} code={INSTALL_CMDS[os].lines.join("\n")}/>
+          {INSTALL_CMDS[os].note && (
+            <div style={{fontFamily:VT, fontSize:15, color:C.dim, marginTop:8}}>
+              ⚠ {INSTALL_CMDS[os].note}
+            </div>
+          )}
           <div style={{display:"flex", justifyContent:"flex-end", marginTop:12}}>
             <Btn color={C.yellow} onClick={() => { setPhase(1); Sound.scan(); }}>I've Run It →</Btn>
           </div>
@@ -794,7 +800,7 @@ function TownHall({ classKey, onComplete, onLeave, userState, setUserState }) {
     {
       phase:"BUILD", label:"Install RDK",
       npc:"MAYOR PIX", avatar:"🏛", color:C.yellow,
-      text:"Time to install. This is one command — and it works on any machine. Pick your OS, copy the line, run it. We'll verify it together, then bring your node online.",
+      text:"Time to install. Works on any machine — pick your OS, copy the command, run it. On macOS you tap the formula, then install. We'll verify it together, then bring your node online.",
       extra: <InstallCeremony
         os={installOs} setOs={setInstallOs}
         phase={installPhase} setPhase={setInstallPhase}
@@ -3257,7 +3263,7 @@ function Portal({ classKey, onRestart, onLeave, userState }) {
   useEffect(() => { Sound.unlock(); }, []);
   const allCommands = [
     `# RDK STACK — ${nodeName}`,
-    `npm install -g rdk && rdk init`,
+    `npm install -g @retrodeck/rdk && rdk init`,
     `rdk index ./my-docs/ --private`,
     `rdk index ./my-guide.md`,
     `rdk mcp:serve --stdio`,
@@ -3301,7 +3307,7 @@ function Portal({ classKey, onRestart, onLeave, userState }) {
         <div style={{ maxWidth:760, width:"100%" }}>
           <div style={{ fontFamily:PIXEL, fontSize:9, color:C.dim, letterSpacing:1, marginBottom:10 }}>✓ WHAT YOU BUILT TODAY</div>
           {[
-            { icon:"⚡", label:"RDK toolchain installed", val:"npm install -g rdk && rdk init", done:true },
+            { icon:"⚡", label:"RDK toolchain installed", val:"npm install -g @retrodeck/rdk && rdk init", done:true },
             { icon:"🔒", label:"Private vault indexed", val:`rdk index ./my-docs/ --private`, done:true },
             { icon:"🌐", label:"Public knowledge contributed", val:`rdk index ./my-guide.md`, done:true },
             { icon:"🔌", label:"Claude Desktop connected", val:`rdk mcp:serve --stdio`, done:!!toolName },
